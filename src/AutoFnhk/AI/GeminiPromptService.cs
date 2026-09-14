@@ -4,15 +4,16 @@ using System.Text.Json;
 namespace AutoFnhk.AI;
 
 /// <summary>
-/// The only AI file that requires a Gemini API key.
-/// Gemini is used for natural-language planning only; it does not directly
-/// send mouse/keyboard input or control the game.
+/// Gemini planning service for the user's private Fortnoob test harness.
+/// This is the only AI file that requires an API key.
+/// Gemini produces structured plans; the local runtime validates and executes
+/// only supported actions through the separate input layer.
 /// </summary>
 public sealed class GeminiPromptService
 {
     // Paste your Gemini API key between the quotes when you configure the app.
-    // Do not commit a real key to a public repository.
-    private const string GoogleApiKey = "AQ.Ab8RN6IQS3ei5KWQAI7sW3gdQT7fDbxqSSNIjtsl-bkYcfIyQA";
+    // Keep this repository private and never share the key publicly.
+    private const string GoogleApiKey = "PASTE_YOUR_GOOGLE_API_KEY_HERE";
     private const string DefaultModel = "gemini-2.5-flash";
 
     private readonly HttpClient _httpClient;
@@ -28,7 +29,7 @@ public sealed class GeminiPromptService
 
     public bool IsConfigured =>
         !string.IsNullOrWhiteSpace(_apiKey) &&
-        !string.Equals(_apiKey, "PASTE_YOUR_GOOGLE_API_KEY_HERE;
+        !string.Equals(_apiKey, "PASTE_YOUR_GOOGLE_API_KEY_HERE", StringComparison.Ordinal);
 
     public async Task<AiResponse> CreatePlanAsync(
         AiCommandRequest request,
@@ -78,16 +79,17 @@ public sealed class GeminiPromptService
                 return new AiResponse(false, "Gemini request failed.", Error: $"HTTP {(int)response.StatusCode}: {body}");
 
             using var document = JsonDocument.Parse(body);
-            var candidates = document.RootElement.GetProperty("candidates");
-            if (candidates.GetArrayLength() == 0)
+            if (!document.RootElement.TryGetProperty("candidates", out var candidates) || candidates.GetArrayLength() == 0)
                 return new AiResponse(false, "Gemini returned no candidates.");
 
-            var text = candidates[0]
-                .GetProperty("content")
-                .GetProperty("parts")[0]
-                .GetProperty("text")
-                .GetString();
+            var candidate = candidates[0];
+            if (!candidate.TryGetProperty("content", out var contentElement) ||
+                !contentElement.TryGetProperty("parts", out var parts) ||
+                parts.GetArrayLength() == 0 ||
+                !parts[0].TryGetProperty("text", out var textElement))
+                return new AiResponse(false, "Gemini returned an incomplete response.");
 
+            var text = textElement.GetString();
             if (string.IsNullOrWhiteSpace(text))
                 return new AiResponse(false, "Gemini returned an empty plan.");
 
