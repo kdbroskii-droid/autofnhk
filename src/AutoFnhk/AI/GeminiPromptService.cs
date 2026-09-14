@@ -12,7 +12,7 @@ public sealed class GeminiPromptService
 {
     // Paste your Gemini API key between the quotes when you configure the app.
     // Do not commit a real key to a public repository.
-    private const string GoogleApiKey = "PASTE_YOUR_GOOGLE_API_KEY_HERE";
+    private const string GoogleApiKey = "AQ.Ab8RN6IQS3ei5KWQAI7sW3gdQT7fDbxqSSNIjtsl-bkYcfIyQA";
     private const string DefaultModel = "gemini-2.5-flash";
 
     private readonly HttpClient _httpClient;
@@ -28,7 +28,7 @@ public sealed class GeminiPromptService
 
     public bool IsConfigured =>
         !string.IsNullOrWhiteSpace(_apiKey) &&
-        !string.Equals(_apiKey, "PASTE_YOUR_GOOGLE_API_KEY_HERE", StringComparison.Ordinal);
+        !string.Equals(_apiKey, "AQ.Ab8RN6IQS3ei5KWQAI7sW3gdQT7fDbxqSSNIjtsl-bkYcfIyQA", StringComparison.Ordinal);
 
     public async Task<AiResponse> CreatePlanAsync(
         AiCommandRequest request,
