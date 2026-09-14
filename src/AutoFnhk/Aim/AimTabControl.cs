@@ -1,5 +1,4 @@
 using System.Numerics;
-using System.Text;
 using System.Windows.Forms;
 
 namespace AutoFnhk.Aim;
@@ -41,19 +40,43 @@ public sealed class AimTabControl : UserControl
 
     private void BuildUi()
     {
-        var title = new Label { Text = "AIM", Dock = DockStyle.Top, Height = 46, Font = new System.Drawing.Font("Segoe UI", 18, System.Drawing.FontStyle.Bold), Padding = new Padding(16, 8, 0, 0) };
+        var title = new Label
+        {
+            Text = "AIM",
+            Dock = DockStyle.Top,
+            Height = 46,
+            Font = new System.Drawing.Font("Segoe UI", 18, System.Drawing.FontStyle.Bold),
+            Padding = new Padding(16, 8, 0, 0)
+        };
         Controls.Add(title);
 
-        var split = new SplitContainer { Dock = DockStyle.Fill, Orientation = Orientation.Vertical, SplitterDistance = 310, Padding = new Padding(12) };
+        var split = new SplitContainer
+        {
+            Dock = DockStyle.Fill,
+            Orientation = Orientation.Vertical,
+            SplitterDistance = 330,
+            Padding = new Padding(12)
+        };
         Controls.Add(split);
 
-        var settingsPanel = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoScroll = true };
+        var settingsPanel = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.TopDown,
+            WrapContents = false,
+            AutoScroll = true
+        };
         split.Panel1.Controls.Add(settingsPanel);
 
         ConfigureCheck(_enabled, "Aim enabled");
         ConfigureCheck(_headPriority, "Prefer head");
         ConfigureCheck(_torsoFallback, "Allow torso fallback");
         ConfigureCheck(_confidenceRequired, "Require confidence");
+
+        settingsPanel.Controls.Add(_enabled);
+        settingsPanel.Controls.Add(_headPriority);
+        settingsPanel.Controls.Add(_torsoFallback);
+        settingsPanel.Controls.Add(_confidenceRequired);
 
         ConfigureNumber(_minConfidence, "Minimum confidence", 0, 1, 0.01m, 2);
         ConfigureNumber(_closeSmoothing, "Close smoothing", 0, 100, 0.5m, 1);
@@ -62,18 +85,22 @@ public sealed class AimTabControl : UserControl
         ConfigureNumber(_referenceDistance, "Reference distance", 1, 10000, 50, 0);
         ConfigureNumber(_maxDistance, "Maximum target distance", 1, 10000, 50, 0);
 
+        AddSetting(settingsPanel, "Minimum confidence", _minConfidence);
+        AddSetting(settingsPanel, "Close smoothing", _closeSmoothing);
+        AddSetting(settingsPanel, "Far smoothing", _farSmoothing);
+        AddSetting(settingsPanel, "Snap distance", _snapDistance);
+        AddSetting(settingsPanel, "Reference distance", _referenceDistance);
+        AddSetting(settingsPanel, "Maximum distance", _maxDistance);
+
         _targetPoint.DropDownStyle = ComboBoxStyle.DropDownList;
         _targetPoint.Items.AddRange(["Head", "Torso"]);
         AddSetting(settingsPanel, "Target point", _targetPoint);
 
-        foreach (var control in new Control[] { _enabled, _headPriority, _torsoFallback, _confidenceRequired, _minConfidence, _closeSmoothing, _farSmoothing, _snapDistance, _referenceDistance, _maxDistance, _targetPoint })
-            control.Margin = new Padding(3, 5, 3, 5);
-
-        var apply = new Button { Text = "Apply settings", Width = 270, Height = 36 };
+        var apply = new Button { Text = "Apply settings", Width = 290, Height = 36 };
         apply.Click += (_, _) => ApplySettings();
         settingsPanel.Controls.Add(apply);
 
-        var clear = new Button { Text = "Clear log", Width = 270, Height = 32 };
+        var clear = new Button { Text = "Clear log", Width = 290, Height = 32 };
         clear.Click += (_, _) => _log.Clear();
         settingsPanel.Controls.Add(clear);
 
@@ -89,7 +116,13 @@ public sealed class AimTabControl : UserControl
         _status.Padding = new Padding(8);
         right.Controls.Add(_status, 0, 0);
 
-        var info = new Label { Dock = DockStyle.Fill, Text = "Test output stays here. Example: target detected, aim point selected, shot miss, shot on target. No screen overlay is used.", AutoSize = false, Padding = new Padding(8) };
+        var info = new Label
+        {
+            Dock = DockStyle.Fill,
+            Text = "All diagnostics stay inside this tab. Example: target detected → target selected → aim point calculated. No screen overlay is used.",
+            AutoSize = false,
+            Padding = new Padding(8)
+        };
         right.Controls.Add(info, 0, 1);
 
         _log.Dock = DockStyle.Fill;
@@ -100,28 +133,38 @@ public sealed class AimTabControl : UserControl
         right.Controls.Add(_log, 0, 2);
     }
 
-    private static void ConfigureCheck(CheckBox box, string text) => box.Text = text;
+    private static void ConfigureCheck(CheckBox box, string text)
+    {
+        box.Text = text;
+        box.AutoSize = true;
+        box.Margin = new Padding(5, 7, 5, 7);
+    }
 
     private static void ConfigureNumber(NumericUpDown box, string label, decimal min, decimal max, decimal increment, int decimals)
     {
-        box.Minimum = min; box.Maximum = max; box.Increment = increment; box.DecimalPlaces = decimals; box.Width = 120;
+        box.Minimum = min;
+        box.Maximum = max;
+        box.Increment = increment;
+        box.DecimalPlaces = decimals;
+        box.Width = 125;
         box.Tag = label;
     }
 
-    private static void AddSetting(Control parent, string label, Control editor)
+    private static void AddSetting(FlowLayoutPanel parent, string label, Control editor)
     {
-        var row = new Panel { Width = 275, Height = 42 };
-        var text = new Label { Text = label, AutoSize = false, Width = 150, Height = 35, TextAlign = System.Drawing.ContentAlignment.MiddleLeft };
-        editor.Location = new System.Drawing.Point(150, 2);
-        row.Controls.Add(text); row.Controls.Add(editor); parent.Controls.Add(row);
-    }
-
-    private void AddSetting(FlowLayoutPanel parent, string label, NumericUpDown editor)
-    {
-        var row = new Panel { Width = 275, Height = 42 };
-        var text = new Label { Text = label, AutoSize = false, Width = 150, Height = 35, TextAlign = System.Drawing.ContentAlignment.MiddleLeft };
-        editor.Location = new System.Drawing.Point(150, 2);
-        row.Controls.Add(text); row.Controls.Add(editor); parent.Controls.Add(row);
+        var row = new Panel { Width = 300, Height = 42, Margin = new Padding(3, 2, 3, 2) };
+        var text = new Label
+        {
+            Text = label,
+            AutoSize = false,
+            Width = 170,
+            Height = 35,
+            TextAlign = System.Drawing.ContentAlignment.MiddleLeft
+        };
+        editor.Location = new System.Drawing.Point(170, 2);
+        row.Controls.Add(text);
+        row.Controls.Add(editor);
+        parent.Controls.Add(row);
     }
 
     private void LoadSettingsIntoUi()
@@ -142,7 +185,7 @@ public sealed class AimTabControl : UserControl
     private void ApplySettings()
     {
         _settings.Enabled = _enabled.Checked;
-        _settings.HeadPriority = _targetPoint.SelectedIndex == 0 || _headPriority.Checked;
+        _settings.HeadPriority = _targetPoint.SelectedIndex == 0;
         _settings.AllowTorsoFallback = _torsoFallback.Checked;
         _settings.RequireConfidence = _confidenceRequired.Checked;
         _settings.MinimumConfidence = (float)_minConfidence.Value;
