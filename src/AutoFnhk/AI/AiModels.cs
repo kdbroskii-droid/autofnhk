@@ -42,3 +42,12 @@ public sealed record AiResponse(
     string Message,
     AiPlan? Plan = null,
     string? Error = null);
+
+public sealed record AiPromptRequest(string Prompt, int SkillLevel);
+
+public sealed record AiPromptPlan(
+    string Summary,
+    IReadOnlyList<string> Objectives,
+    IReadOnlyList<string> Behaviors,
+    IReadOnlyList<string> Conditions,
+    IReadOnlyList<string> EvaluationRules);
