@@ -1,4 +1,4 @@
-using AutoFnhk.Ai;
+using AutoFnhk.AI;
 using AutoFnhk.Aim;
 using AutoFnhk.Settings;
 using AutoFnhk.Weapon;
