@@ -4,7 +4,6 @@ namespace AutoFnhk.Aim;
 
 /// <summary>
 /// Calculates a screen-space aim point for Fortnoob's own test targets.
-/// It returns coordinates only; the game test harness decides how to apply them.
 /// </summary>
 public sealed class AimController
 {
@@ -15,15 +14,41 @@ public sealed class AimController
         Settings = settings ?? new AimSettings();
     }
 
+    /// <summary>
+    /// True when the current aim is not yet close enough to the selected target.
+    /// </summary>
+    public bool IsAimNeeded(Vector2 currentAim, AimTarget target)
+    {
+        if (!Settings.Enabled)
+            return false;
+
+        if (Settings.RequireConfidence && target.Confidence < Settings.MinimumConfidence)
+            return false;
+
+        var targetPoint = GetTargetPoint(target);
+        return Vector2.Distance(currentAim, targetPoint) > Settings.SnapDistance;
+    }
+
+    /// <summary>
+    /// True when the aim point is within the configured snap distance of the target.
+    /// </summary>
+    public bool IsAimLocked(Vector2 currentAim, AimTarget target)
+    {
+        if (!Settings.Enabled)
+            return false;
+
+        if (Settings.RequireConfidence && target.Confidence < Settings.MinimumConfidence)
+            return false;
+
+        return Vector2.Distance(currentAim, GetTargetPoint(target)) <= Settings.SnapDistance;
+    }
+
     public Vector2 CalculateAimPoint(Vector2 currentAim, AimTarget target, float deltaSeconds)
     {
         if (!Settings.Enabled || deltaSeconds <= 0f)
             return currentAim;
 
-        var targetPoint = Settings.HeadPriority || !Settings.AllowTorsoFallback
-            ? target.Head
-            : target.Torso;
-
+        var targetPoint = GetTargetPoint(target);
         var offset = targetPoint - currentAim;
         var distanceToTarget = offset.Length();
 
@@ -37,6 +62,11 @@ public sealed class AimController
 
         return currentAim + offset * Math.Clamp(step, 0f, 1f);
     }
+
+    private Vector2 GetTargetPoint(AimTarget target) =>
+        Settings.HeadPriority || !Settings.AllowTorsoFallback
+            ? target.Head
+            : target.Torso;
 
     private static float Lerp(float a, float b, float t) => a + (b - a) * t;
 }
