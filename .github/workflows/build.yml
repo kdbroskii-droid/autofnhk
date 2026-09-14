@@ -23,11 +23,19 @@ jobs:
       - name: Build
         run: dotnet build src/AutoFnhk/AutoFnhk.csproj -c Release --no-restore
 
-      - name: Publish
-        run: dotnet publish src/AutoFnhk/AutoFnhk.csproj -c Release -r win-x64 --self-contained false --no-restore -o publish
+      - name: Publish Windows EXE
+        run: >-
+          dotnet publish src/AutoFnhk/AutoFnhk.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          --no-restore
+          -o publish
 
-      - name: Upload build
+      - name: Upload EXE
         uses: actions/upload-artifact@v4
         with:
           name: AutoFnhk-win-x64
-          path: publish/
+          path: publish/AutoFnhk.exe
