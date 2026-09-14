@@ -14,7 +14,7 @@ public sealed class GeminiPromptService
 {
     // Replace only this value with your Gemini API key.
     private const string GoogleApiKey = "AQ.Ab8RN6IQS3ei5KWQAI7sW3gdQT7fDbxqSSNIjtsl-bkYcfIyQA";
-    private const string DefaultModel = "gemini-2.5-flash";
+    private const string DefaultModel = "gemini-2.5-flash-lite";
     private const string EndpointBase = "https://generativelanguage.googleapis.com/v1beta/models/";
 
     private readonly HttpClient _httpClient;
