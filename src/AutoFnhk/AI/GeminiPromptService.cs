@@ -28,7 +28,7 @@ public sealed class GeminiPromptService
 
     public bool IsConfigured =>
         !string.IsNullOrWhiteSpace(_apiKey) &&
-        !string.Equals(_apiKey, "AQ.Ab8RN6IQS3ei5KWQAI7sW3gdQT7fDbxqSSNIjtsl-bkYcfIyQA", StringComparison.Ordinal);
+        !string.Equals(_apiKey, "PASTE_YOUR_GOOGLE_API_KEY_HERE;
 
     public async Task<AiResponse> CreatePlanAsync(
         AiCommandRequest request,
