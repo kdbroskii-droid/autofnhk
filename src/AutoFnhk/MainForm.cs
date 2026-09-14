@@ -1,3 +1,4 @@
+using AutoFnhk.Ai;
 using AutoFnhk.Aim;
 using AutoFnhk.Settings;
 using AutoFnhk.Weapon;
@@ -14,8 +15,13 @@ public sealed class MainForm : Form
         MinimumSize = new Size(760, 520);
         BackColor = Color.FromArgb(18, 18, 25);
         ForeColor = Color.White;
+        KeyPreview = true;
 
         var tabs = new TabControl { Dock = DockStyle.Fill };
+
+        var aiTab = new TabPage("AI") { BackColor = Color.FromArgb(22, 22, 30) };
+        aiTab.Controls.Add(new AiPromptTabControl());
+        tabs.TabPages.Add(aiTab);
 
         var aimTab = new TabPage("Aim") { BackColor = Color.FromArgb(22, 22, 30) };
         aimTab.Controls.Add(new AimTabControl());
