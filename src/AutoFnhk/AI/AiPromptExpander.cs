@@ -1,29 +1,35 @@
-using System.Text;
-
 namespace AutoFnhk.AI;
 
 /// <summary>
-/// Expands a user's short Fortnoob test instruction into a structured AI plan.
-/// This is the local planning layer; an external language model can later replace
-/// or enrich the parsing without changing the rest of AutoFnhk.
+/// Local, deterministic prompt understanding. No API key is required here.
+/// Gemini can enrich the plan later, but the app always has a local fallback.
 /// </summary>
 public sealed class AiPromptExpander
 {
-    private static readonly string[] KnownObjectives =
+    private static readonly string[] ObjectiveVocabulary =
     [
         "1v1", "box fight", "build fight", "free build", "edit course",
         "quad edit", "triple edit", "piece control", "prefire",
-        "practice", "survive", "get eliminations"
+        "copy style", "practice", "survive", "get eliminations"
+    ];
+
+    private static readonly string[] AlwaysOnBehaviors =
+    [
+        "Aggression", "Passive/safe decision making", "Third-party awareness",
+        "Rotation", "Survival", "Elimination objective", "Adaptation",
+        "Combo/sequence handling", "Conditional decision making",
+        "Difficulty scaling", "Goal priorities"
     ];
 
     public AiPromptPlan Expand(AiPromptRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
+
         var text = request.Prompt.Trim();
         if (text.Length == 0)
             throw new ArgumentException("The AI prompt cannot be empty.", nameof(request));
 
-        var objectives = KnownObjectives
+        var objectives = ObjectiveVocabulary
             .Where(x => text.Contains(x, StringComparison.OrdinalIgnoreCase))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
@@ -31,35 +37,37 @@ public sealed class AiPromptExpander
         if (objectives.Count == 0)
             objectives.Add("general gameplay objective");
 
-        var behaviors = new List<string>
+        var behaviors = new List<string>(AlwaysOnBehaviors)
         {
-            "Observe the current Fortnoob test-game state before acting.",
-            "Choose actions that advance the requested objective.",
-            "Handle normal movement, aiming, weapon management, building and editing as required.",
-            "Continuously reassess the situation after each meaningful action.",
-            $"Operate at skill level {Math.Clamp(request.SkillLevel, 1, 5)}."
+            $"Use skill level {Math.Clamp(request.SkillLevel, 1, 5)}.",
+            "Observe game state before choosing an action.",
+            "Re-evaluate after meaningful state changes.",
+            "Prefer actions that advance the highest-priority current goal."
         };
-
-        if (text.Contains("aggressive", StringComparison.OrdinalIgnoreCase))
-            behaviors.Add("Prefer proactive engagements when the game state supports them.");
-        if (text.Contains("passive", StringComparison.OrdinalIgnoreCase))
-            behaviors.Add("Prefer safer decisions and avoid unnecessary engagements.");
-        if (text.Contains("adapt", StringComparison.OrdinalIgnoreCase))
-            behaviors.Add("Adapt the strategy when the current approach produces poor results.");
 
         var conditions = new List<string>
         {
-            "If the requested objective is complete, evaluate whether another requested objective remains.",
-            "If the game state changes significantly, reconsider the next action.",
-            "If an action fails, record the failure and select a viable alternative."
+            "If the primary objective is complete, move to the next requested objective.",
+            "If the game state changes significantly, reconsider the current plan.",
+            "If an action fails, record the failure and choose a valid alternative.",
+            "If survival and the current objective conflict, use the configured goal priorities."
         };
 
         var evaluation = new List<string>
         {
-            "Record objective progress.",
-            "Record successful and unsuccessful actions.",
-            "Use results to improve later decisions during the same test session."
+            "Objective progress",
+            "Successful and unsuccessful actions",
+            "Fight outcomes and survival",
+            "Decision quality and adaptation",
+            "Performance compared with the selected difficulty"
         };
+
+        if (text.Contains("aggressive", StringComparison.OrdinalIgnoreCase))
+            conditions.Add("Aggressive modifier requested: favor proactive opportunities when risk is acceptable.");
+        if (text.Contains("passive", StringComparison.OrdinalIgnoreCase))
+            conditions.Add("Passive modifier requested: favor safer positions and avoid unnecessary fights.");
+        if (text.Contains("adapt", StringComparison.OrdinalIgnoreCase))
+            conditions.Add("Adaptation requested: change strategy when evidence shows the current approach is ineffective.");
 
         return new AiPromptPlan(
             Summary: text,
@@ -69,22 +77,6 @@ public sealed class AiPromptExpander
             EvaluationRules: evaluation);
     }
 
-    public static string ToModelPrompt(AiPromptRequest request, AiPromptPlan plan)
-    {
-        var sb = new StringBuilder();
-        sb.AppendLine("You are the planning AI for the user's private Fortnoob test environment.");
-        sb.AppendLine("Interpret the user's instruction as a gameplay objective, not as a fixed macro.");
-        sb.AppendLine("Return decisions that can be validated by the AutoFnhk action system.");
-        sb.AppendLine($"Skill level: {Math.Clamp(request.SkillLevel, 1, 5)}");
-        sb.AppendLine($"User instruction: {request.Prompt.Trim()}");
-        sb.AppendLine("Objectives:");
-        foreach (var item in plan.Objectives) sb.AppendLine($"- {item}");
-        sb.AppendLine("Always-on behaviors:");
-        foreach (var item in plan.Behaviors) sb.AppendLine($"- {item}");
-        sb.AppendLine("Conditions:");
-        foreach (var item in plan.Conditions) sb.AppendLine($"- {item}");
-        sb.AppendLine("Evaluation:");
-        foreach (var item in plan.EvaluationRules) sb.AppendLine($"- {item}");
-        return sb.ToString();
-    }
+    public static AiCommandRequest ToCommandRequest(AiPromptRequest request) =>
+        new(request.Prompt.Trim(), Math.Clamp(request.SkillLevel, 1, 5), AiCommandMode.PlanOnly);
 }
