@@ -1,5 +1,6 @@
 using AutoFnhk.AI;
 using AutoFnhk.Aim;
+using AutoFnhk.Input;
 using AutoFnhk.Settings;
 using AutoFnhk.Weapon;
 
@@ -26,6 +27,10 @@ public sealed class MainForm : Form
         var aimTab = new TabPage("Aim") { BackColor = Color.FromArgb(22, 22, 30) };
         aimTab.Controls.Add(new AimTabControl());
         tabs.TabPages.Add(aimTab);
+
+        var keyboardTab = new TabPage("Keyboard") { BackColor = Color.FromArgb(22, 22, 30) };
+        keyboardTab.Controls.Add(new KeyboardTabControl());
+        tabs.TabPages.Add(keyboardTab);
 
         var weaponTab = new TabPage("Weapon") { BackColor = Color.FromArgb(22, 22, 30) };
         weaponTab.Controls.Add(new WeaponTabControl());
