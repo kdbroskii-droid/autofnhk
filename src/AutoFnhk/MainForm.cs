@@ -1,4 +1,6 @@
 using AutoFnhk.Aim;
+using AutoFnhk.Settings;
+using AutoFnhk.Weapon;
 
 namespace AutoFnhk;
 
@@ -14,9 +16,19 @@ public sealed class MainForm : Form
         ForeColor = Color.White;
 
         var tabs = new TabControl { Dock = DockStyle.Fill };
+
         var aimTab = new TabPage("Aim") { BackColor = Color.FromArgb(22, 22, 30) };
         aimTab.Controls.Add(new AimTabControl());
         tabs.TabPages.Add(aimTab);
+
+        var weaponTab = new TabPage("Weapon") { BackColor = Color.FromArgb(22, 22, 30) };
+        weaponTab.Controls.Add(new WeaponTabControl());
+        tabs.TabPages.Add(weaponTab);
+
+        var settingsTab = new TabPage("Settings") { BackColor = Color.FromArgb(22, 22, 30) };
+        settingsTab.Controls.Add(new SettingsTabControl());
+        tabs.TabPages.Add(settingsTab);
+
         Controls.Add(tabs);
     }
 }
