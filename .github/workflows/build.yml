@@ -17,12 +17,14 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      - name: Restore
+        run: dotnet restore src/AutoFnhk/AutoFnhk.csproj
+
       - name: Build
         run: dotnet build src/AutoFnhk/AutoFnhk.csproj -c Release --no-restore
-        continue-on-error: false
 
       - name: Publish
-        run: dotnet publish src/AutoFnhk/AutoFnhk.csproj -c Release -r win-x64 --self-contained false -o publish
+        run: dotnet publish src/AutoFnhk/AutoFnhk.csproj -c Release -r win-x64 --self-contained false --no-restore -o publish
 
       - name: Upload build
         uses: actions/upload-artifact@v4
