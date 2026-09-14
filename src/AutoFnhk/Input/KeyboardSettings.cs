@@ -6,24 +6,35 @@ public sealed class KeyboardSettings
     public int DefaultPressDurationMs { get; set; } = 60;
     public int DefaultReleaseDelayMs { get; set; } = 40;
 
-    // Default Fortnite-style test bindings. These are configurable in the UI.
+    // Fortnite PC-style default baseline for Fortnoob's private test setup.
+    // Epic confirms keyboard/mouse controls are configurable in-game;
+    // the complete live default table is maintained inside Fortnite itself.
     public Dictionary<string, string> Bindings { get; } = new(StringComparer.OrdinalIgnoreCase)
     {
+        // Movement
         ["MoveForward"] = "W",
         ["MoveBackward"] = "S",
         ["MoveLeft"] = "A",
         ["MoveRight"] = "D",
         ["Jump"] = "Space",
-        ["Crouch"] = "C",
         ["Sprint"] = "LeftShift",
+        ["Crouch"] = "LeftCtrl",
+
+        // General gameplay
         ["Use"] = "E",
-        ["Reload"] = "R",
-        ["BuildMode"] = "Q",
-        ["Edit"] = "F",
-        ["Pickaxe"] = "1",
-        ["WeaponSlot2"] = "2",
-        ["WeaponSlot3"] = "3",
-        ["WeaponSlot4"] = "4",
-        ["WeaponSlot5"] = "5"
+        ["Inventory"] = "Tab",
+        ["Map"] = "M",
+        ["Emote"] = "B",
+        ["PushToTalk"] = "Y",
+
+        // Building / editing
+        ["Wall"] = "Q",
+        ["Floor"] = "C",
+        ["Stairs"] = "V",
+        ["Roof"] = "F",
+        ["Trap"] = "T",
+        ["RotateBuilding"] = "R",
+        ["Edit"] = "G",
+        ["Repair"] = "H"
     };
 }
