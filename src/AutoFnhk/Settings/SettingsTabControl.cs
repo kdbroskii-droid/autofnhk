@@ -7,12 +7,37 @@ namespace AutoFnhk.Settings;
 public sealed class SettingsTabControl : UserControl
 {
     private readonly ComboBox _skill = new();
-    private readonly CheckBox _autoPlay = new();
+    private readonly CheckBox _aimLock = new();
+    private readonly CheckBox _autoSmoothing = new();
+    private readonly CheckedListBox _autoPlayFeatures = new();
     private readonly CheckBox _diagnostics = new();
     private readonly CheckBox _learning = new();
     private readonly CheckBox _randomVariation = new();
     private readonly TextBox _commandPrompt = new();
     private readonly RichTextBox _log = new();
+
+    private static readonly string[] AutoPlayFeatures =
+    [
+        "Target detection",
+        "Target selection",
+        "Aim movement",
+        "Auto smoothing",
+        "Movement",
+        "Positioning",
+        "Building",
+        "Editing",
+        "Piece control",
+        "Rotation",
+        "Survival",
+        "Elimination objective",
+        "Third-party awareness",
+        "Adaptation",
+        "Difficulty scaling",
+        "Goal priorities",
+        "Combo / sequence handling",
+        "Conditional decisions",
+        "Learning / feedback"
+    ];
 
     public SettingsTabControl()
     {
@@ -33,11 +58,35 @@ public sealed class SettingsTabControl : UserControl
         var title = new Label { Text = "SETTINGS", AutoSize = true, Font = new Font("Segoe UI", 18, FontStyle.Bold), Margin = new Padding(5, 5, 5, 15) };
         left.Controls.Add(title);
 
-        ConfigureCheck(_autoPlay, "Auto Play engine enabled");
+        ConfigureCheck(_aimLock, "Aim lock");
+        ConfigureCheck(_autoSmoothing, "Auto smoothing");
+        _aimLock.Checked = true;
+        _autoSmoothing.Checked = true;
+        left.Controls.Add(_aimLock);
+        left.Controls.Add(_autoSmoothing);
+
+        var autoPlayLabel = new Label
+        {
+            Text = "Auto Play features (double-click to select all)",
+            AutoSize = true,
+            Font = new Font("Segoe UI", 10, FontStyle.Bold),
+            Margin = new Padding(5, 14, 5, 5)
+        };
+        left.Controls.Add(autoPlayLabel);
+
+        _autoPlayFeatures.Width = 320;
+        _autoPlayFeatures.Height = 260;
+        _autoPlayFeatures.CheckOnClick = true;
+        _autoPlayFeatures.BackColor = Color.FromArgb(14, 14, 20);
+        _autoPlayFeatures.ForeColor = Color.White;
+        _autoPlayFeatures.BorderStyle = BorderStyle.FixedSingle;
+        _autoPlayFeatures.Items.AddRange(AutoPlayFeatures);
+        _autoPlayFeatures.ItemCheck += AutoPlayFeatures_ItemCheck;
+        left.Controls.Add(_autoPlayFeatures);
+
         ConfigureCheck(_diagnostics, "Diagnostics / event logging");
         ConfigureCheck(_learning, "Learning / performance feedback");
         ConfigureCheck(_randomVariation, "Human-like variation");
-        left.Controls.Add(_autoPlay);
         left.Controls.Add(_diagnostics);
         left.Controls.Add(_learning);
         left.Controls.Add(_randomVariation);
@@ -59,7 +108,7 @@ public sealed class SettingsTabControl : UserControl
         split.Panel2.Controls.Add(right);
 
         right.Controls.Add(new Label { Text = "AUTO PLAY COMMAND", Dock = DockStyle.Fill, Font = new Font("Segoe UI", 14, FontStyle.Bold), Padding = new Padding(5, 8, 0, 0) }, 0, 0);
-        right.Controls.Add(new Label { Text = "Type a high-level instruction for the future AI planner. This is the command input only; the gameplay planner is a separate advanced stage.", Dock = DockStyle.Fill, Padding = new Padding(5) }, 0, 1);
+        right.Controls.Add(new Label { Text = "Type a high-level instruction for the AI planner. Selected Auto Play features control which capabilities are enabled.", Dock = DockStyle.Fill, Padding = new Padding(5) }, 0, 1);
 
         _commandPrompt.Multiline = true;
         _commandPrompt.Dock = DockStyle.Fill;
@@ -75,6 +124,26 @@ public sealed class SettingsTabControl : UserControl
         _log.ForeColor = Color.Gainsboro;
         _log.Font = new Font("Consolas", 9.5f);
         right.Controls.Add(_log, 0, 3);
+    }
+
+    private void AutoPlayFeatures_ItemCheck(object? sender, ItemCheckEventArgs e)
+    {
+        if (e.Index != 0 || e.NewValue != CheckState.Checked)
+            return;
+
+        // Double-click the list to select every Auto Play capability.
+        if (MouseButtons != MouseButtons.Left)
+            return;
+
+        // ItemCheck fires before the state changes, so defer the select-all operation.
+        BeginInvoke(new Action(() =>
+        {
+            if (_autoPlayFeatures.Focused && _autoPlayFeatures.SelectedIndex >= 0)
+            {
+                for (var i = 0; i < _autoPlayFeatures.Items.Count; i++)
+                    _autoPlayFeatures.SetItemChecked(i, true);
+            }
+        }));
     }
 
     private static void ConfigureCheck(CheckBox box, string text)
@@ -96,7 +165,8 @@ public sealed class SettingsTabControl : UserControl
 
     private void Apply()
     {
-        _log.AppendText($"[{DateTime.Now:HH:mm:ss}] Settings applied: AutoPlay={_autoPlay.Checked}, Skill={_skill.SelectedIndex + 1}, Learning={_learning.Checked}, Variation={_randomVariation.Checked}.{Environment.NewLine}");
+        var selected = _autoPlayFeatures.CheckedItems.Count;
+        _log.AppendText($"[{DateTime.Now:HH:mm:ss}] Settings applied: AimLock={_aimLock.Checked}, AutoSmoothing={_autoSmoothing.Checked}, AutoPlayFeatures={selected}/{_autoPlayFeatures.Items.Count}, Skill={_skill.SelectedIndex + 1}, Learning={_learning.Checked}, Variation={_randomVariation.Checked}.{Environment.NewLine}");
         if (!string.IsNullOrWhiteSpace(_commandPrompt.Text))
             _log.AppendText($"[{DateTime.Now:HH:mm:ss}] AI command queued: {_commandPrompt.Text.Trim()}{Environment.NewLine}");
     }
