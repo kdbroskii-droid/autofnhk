@@ -9,35 +9,11 @@ public sealed class SettingsTabControl : UserControl
     private readonly ComboBox _skill = new();
     private readonly CheckBox _aimLock = new();
     private readonly CheckBox _autoSmoothing = new();
-    private readonly CheckedListBox _autoPlayFeatures = new();
     private readonly CheckBox _diagnostics = new();
     private readonly CheckBox _learning = new();
     private readonly CheckBox _randomVariation = new();
     private readonly TextBox _commandPrompt = new();
     private readonly RichTextBox _log = new();
-
-    private static readonly string[] AutoPlayFeatures =
-    [
-        "Target detection",
-        "Target selection",
-        "Aim movement",
-        "Auto smoothing",
-        "Movement",
-        "Positioning",
-        "Building",
-        "Editing",
-        "Piece control",
-        "Rotation",
-        "Survival",
-        "Elimination objective",
-        "Third-party awareness",
-        "Adaptation",
-        "Difficulty scaling",
-        "Goal priorities",
-        "Combo / sequence handling",
-        "Conditional decisions",
-        "Learning / feedback"
-    ];
 
     public SettingsTabControl()
     {
@@ -65,24 +41,14 @@ public sealed class SettingsTabControl : UserControl
         left.Controls.Add(_aimLock);
         left.Controls.Add(_autoSmoothing);
 
-        var autoPlayLabel = new Label
+        var autoPlayTitle = new Label
         {
-            Text = "Auto Play features (double-click to select all)",
+            Text = "AUTO PLAY",
             AutoSize = true,
-            Font = new Font("Segoe UI", 10, FontStyle.Bold),
-            Margin = new Padding(5, 14, 5, 5)
+            Font = new Font("Segoe UI", 12, FontStyle.Bold),
+            Margin = new Padding(5, 16, 5, 4)
         };
-        left.Controls.Add(autoPlayLabel);
-
-        _autoPlayFeatures.Width = 320;
-        _autoPlayFeatures.Height = 260;
-        _autoPlayFeatures.CheckOnClick = true;
-        _autoPlayFeatures.BackColor = Color.FromArgb(14, 14, 20);
-        _autoPlayFeatures.ForeColor = Color.White;
-        _autoPlayFeatures.BorderStyle = BorderStyle.FixedSingle;
-        _autoPlayFeatures.Items.AddRange(AutoPlayFeatures);
-        _autoPlayFeatures.ItemCheck += AutoPlayFeatures_ItemCheck;
-        left.Controls.Add(_autoPlayFeatures);
+        left.Controls.Add(autoPlayTitle);
 
         ConfigureCheck(_diagnostics, "Diagnostics / event logging");
         ConfigureCheck(_learning, "Learning / performance feedback");
@@ -108,7 +74,7 @@ public sealed class SettingsTabControl : UserControl
         split.Panel2.Controls.Add(right);
 
         right.Controls.Add(new Label { Text = "AUTO PLAY COMMAND", Dock = DockStyle.Fill, Font = new Font("Segoe UI", 14, FontStyle.Bold), Padding = new Padding(5, 8, 0, 0) }, 0, 0);
-        right.Controls.Add(new Label { Text = "Type a high-level instruction for the AI planner. Selected Auto Play features control which capabilities are enabled.", Dock = DockStyle.Fill, Padding = new Padding(5) }, 0, 1);
+        right.Controls.Add(new Label { Text = "Type a high-level instruction for the AI planner. Use the AI tab to generate a plan, then press Ctrl to begin.", Dock = DockStyle.Fill, Padding = new Padding(5) }, 0, 1);
 
         _commandPrompt.Multiline = true;
         _commandPrompt.Dock = DockStyle.Fill;
@@ -124,26 +90,6 @@ public sealed class SettingsTabControl : UserControl
         _log.ForeColor = Color.Gainsboro;
         _log.Font = new Font("Consolas", 9.5f);
         right.Controls.Add(_log, 0, 3);
-    }
-
-    private void AutoPlayFeatures_ItemCheck(object? sender, ItemCheckEventArgs e)
-    {
-        if (e.Index != 0 || e.NewValue != CheckState.Checked)
-            return;
-
-        // Double-click the list to select every Auto Play capability.
-        if (MouseButtons != MouseButtons.Left)
-            return;
-
-        // ItemCheck fires before the state changes, so defer the select-all operation.
-        BeginInvoke(new Action(() =>
-        {
-            if (_autoPlayFeatures.Focused && _autoPlayFeatures.SelectedIndex >= 0)
-            {
-                for (var i = 0; i < _autoPlayFeatures.Items.Count; i++)
-                    _autoPlayFeatures.SetItemChecked(i, true);
-            }
-        }));
     }
 
     private static void ConfigureCheck(CheckBox box, string text)
@@ -165,8 +111,7 @@ public sealed class SettingsTabControl : UserControl
 
     private void Apply()
     {
-        var selected = _autoPlayFeatures.CheckedItems.Count;
-        _log.AppendText($"[{DateTime.Now:HH:mm:ss}] Settings applied: AimLock={_aimLock.Checked}, AutoSmoothing={_autoSmoothing.Checked}, AutoPlayFeatures={selected}/{_autoPlayFeatures.Items.Count}, Skill={_skill.SelectedIndex + 1}, Learning={_learning.Checked}, Variation={_randomVariation.Checked}.{Environment.NewLine}");
+        _log.AppendText($"[{DateTime.Now:HH:mm:ss}] Settings applied: AimLock={_aimLock.Checked}, AutoSmoothing={_autoSmoothing.Checked}, Skill={_skill.SelectedIndex + 1}, Learning={_learning.Checked}, Variation={_randomVariation.Checked}.{Environment.NewLine}");
         if (!string.IsNullOrWhiteSpace(_commandPrompt.Text))
             _log.AppendText($"[{DateTime.Now:HH:mm:ss}] AI command queued: {_commandPrompt.Text.Trim()}{Environment.NewLine}");
     }
