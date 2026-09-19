@@ -1,14 +1,17 @@
 package com.autofnhk.android
 
-import android.app.Activity
-import android.os.Bundle
+import android.content.Intent
 import android.graphics.Color
+import android.os.Bundle
+import android.provider.Settings
 import android.view.Gravity
 import android.widget.*
-import android.content.Context
+import java.util.concurrent.atomic.AtomicBoolean
 
-class MainActivity : Activity() {
+class MainActivity : android.app.Activity() {
     private lateinit var status: TextView
+    private lateinit var targetPackage: EditText
+    private val running = AtomicBoolean(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,9 +30,7 @@ class MainActivity : Activity() {
         }
         root.addView(title)
 
-        val tabs = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-        }
+        val tabs = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         val aiButton = Button(this).apply { text = "AI" }
         val settingsButton = Button(this).apply { text = "Settings" }
         val diagnosticsButton = Button(this).apply { text = "Diagnostics" }
@@ -42,7 +43,7 @@ class MainActivity : Activity() {
         root.addView(content, LinearLayout.LayoutParams(-1, 0, 1f))
 
         status = TextView(this).apply {
-            text = "Press the AI button to enter a plan."
+            text = "Android controller ready."
             textSize = 15f
             setTextColor(Color.LTGRAY)
             setPadding(0, 16, 0, 0)
@@ -55,6 +56,25 @@ class MainActivity : Activity() {
                 orientation = LinearLayout.VERTICAL
                 setPadding(0, 20, 0, 0)
             }
+
+            targetPackage = EditText(this).apply {
+                hint = "Fortnoob package name"
+                setTextColor(Color.WHITE)
+                setHintTextColor(Color.GRAY)
+                singleLine = true
+                setText(getPreferences(MODE_PRIVATE).getString("target_package", ""))
+            }
+            box.addView(targetPackage)
+
+            val enable = Button(this).apply { text = "Enable Android controller" }
+            enable.setOnClickListener {
+                getPreferences(MODE_PRIVATE).edit()
+                    .putString("target_package", targetPackage.text.toString().trim()).apply()
+                startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                status.text = "Enable AutoFnhk under Accessibility, then return here."
+            }
+            box.addView(enable)
+
             val prompt = EditText(this).apply {
                 hint = "Enter an AI plan..."
                 setTextColor(Color.WHITE)
@@ -62,14 +82,36 @@ class MainActivity : Activity() {
                 minLines = 4
                 gravity = Gravity.TOP
             }
+            box.addView(prompt, LinearLayout.LayoutParams(-1, 0, 1f))
+
             val begin = Button(this).apply { text = "Begin AI plan" }
             begin.setOnClickListener {
-                status.text = "AI plan ready. Android control execution is not connected."
+                val pkg = targetPackage.text.toString().trim()
+                if (pkg.isEmpty()) {
+                    status.text = "Enter your Fortnoob package name first."
+                    return@setOnClickListener
+                }
+                getPreferences(MODE_PRIVATE).edit().putString("target_package", pkg).apply()
+                val service = AutoFnhkAccessibilityService.instance
+                if (service == null) {
+                    status.text = "Controller is not enabled. Tap Enable Android controller first."
+                    return@setOnClickListener
+                }
+                if (running.getAndSet(true)) {
+                    status.text = "AI plan is already running."
+                    return@setOnClickListener
+                }
+                status.text = "AI plan running: " + pkg
+                service.executeTestPlan(pkg, prompt.text.toString()) {
+                    runOnUiThread {
+                        running.set(false)
+                        status.text = "AI plan finished. Check Diagnostics for the action log."
+                    }
+                }
             }
-            box.addView(prompt, LinearLayout.LayoutParams(-1, 0, 1f))
             box.addView(begin)
             content.addView(box)
-            status.text = "Type an instruction, then press Begin."
+            status.text = "Type an instruction, enable the controller, then press Begin."
         }
 
         fun showSettings() {
@@ -83,11 +125,6 @@ class MainActivity : Activity() {
             addSwitch(box, "Diagnostics / Event Logging", true)
             addSwitch(box, "Learning / Performance Feedback", true)
             addSwitch(box, "Human-like Variation", true)
-
-            val skill = Spinner(this)
-            skill.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item,
-                (1..5).map { "Skill level $it" })
-            box.addView(skill)
             content.addView(box)
             status.text = "Settings are saved for this session."
         }
@@ -95,7 +132,7 @@ class MainActivity : Activity() {
         fun showDiagnostics() {
             content.removeAllViews()
             val log = TextView(this).apply {
-                text = "Diagnostics\n\nNo events recorded yet."
+                text = "Diagnostics\n\n" + AutoFnhkAccessibilityService.actionLog.joinToString("\n")
                 textSize = 15f
                 setTextColor(Color.LTGRAY)
                 setPadding(0, 20, 0, 0)
