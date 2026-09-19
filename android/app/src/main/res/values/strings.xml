@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AutoFnhk</string>
+    <string name="accessibility_description">Controls the configured Fortnoob test app only and stops when another app is foreground.</string>
+</resources>
