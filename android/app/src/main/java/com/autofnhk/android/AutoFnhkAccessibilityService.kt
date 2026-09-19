@@ -44,8 +44,10 @@ class AutoFnhkAccessibilityService : AccessibilityService() {
             return
         }
 
-        log("Plan: " + prompt.ifBlank { "basic controller test" })
-        val actions = listOf("tap center", "swipe left", "swipe right", "tap center")
+        log("Plan: " + prompt.ifBlank { "aim movement test" })
+        log("Input mode: Android touch gestures")
+
+        val actions = listOf("aim right", "aim left", "aim up", "aim down")
 
         var index = 0
         fun next() {
@@ -56,32 +58,30 @@ class AutoFnhkAccessibilityService : AccessibilityService() {
             }
 
             when (index) {
-                0, 3 -> tapCenter()
-                1 -> swipe(0.25f, 0.50f, 0.75f, 0.50f)
-                2 -> swipe(0.75f, 0.50f, 0.25f, 0.50f)
+                0 -> aimSwipe(0.72f, 0.50f, 0.88f, 0.50f)
+                1 -> aimSwipe(0.88f, 0.50f, 0.72f, 0.50f)
+                2 -> aimSwipe(0.80f, 0.38f, 0.80f, 0.22f)
+                3 -> aimSwipe(0.80f, 0.22f, 0.80f, 0.38f)
             }
+
             log("Action " + (index + 1) + "/" + actions.size + ": " + actions[index])
             index++
-            handler.postDelayed(::next, 450)
+            handler.postDelayed(::next, 550)
         }
+
         next()
     }
 
-    private fun tapCenter() {
-        val dm = resources.displayMetrics
-        val path = Path().apply { moveTo(dm.widthPixels / 2f, dm.heightPixels / 2f) }
-        val stroke = GestureDescription.StrokeDescription(path, 0, 80)
-        dispatchGesture(GestureDescription.Builder().addStroke(stroke).build(), null, null)
-    }
-
-    private fun swipe(fromX: Float, fromY: Float, toX: Float, toY: Float) {
+    private fun aimSwipe(fromX: Float, fromY: Float, toX: Float, toY: Float) {
         val dm = resources.displayMetrics
         val path = Path().apply {
             moveTo(dm.widthPixels * fromX, dm.heightPixels * fromY)
             lineTo(dm.widthPixels * toX, dm.heightPixels * toY)
         }
-        val stroke = GestureDescription.StrokeDescription(path, 0, 250)
-        dispatchGesture(GestureDescription.Builder().addStroke(stroke).build(), null, null)
+
+        val stroke = GestureDescription.StrokeDescription(path, 0, 300)
+        val gesture = GestureDescription.Builder().addStroke(stroke).build()
+        dispatchGesture(gesture, null, null)
     }
 
     private fun log(message: String) {
