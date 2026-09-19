@@ -61,7 +61,7 @@ class MainActivity : android.app.Activity() {
                 hint = "Fortnoob package name"
                 setTextColor(Color.WHITE)
                 setHintTextColor(Color.GRAY)
-                singleLine = true
+                setSingleLine(true)
                 setText(getPreferences(MODE_PRIVATE).getString("target_package", ""))
             }
             box.addView(targetPackage)
