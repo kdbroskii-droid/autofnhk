@@ -76,7 +76,7 @@ class MainActivity : android.app.Activity() {
             box.addView(enable)
 
             val prompt = EditText(this).apply {
-                hint = "Enter an AI plan..."
+                hint = "AI plan / aim instruction..."
                 setTextColor(Color.WHITE)
                 setHintTextColor(Color.GRAY)
                 minLines = 4
@@ -84,34 +84,48 @@ class MainActivity : android.app.Activity() {
             }
             box.addView(prompt, LinearLayout.LayoutParams(-1, 0, 1f))
 
-            val begin = Button(this).apply { text = "Begin AI plan" }
+            val begin = Button(this).apply { text = "Run Aim / AI Plan" }
             begin.setOnClickListener {
                 val pkg = targetPackage.text.toString().trim()
                 if (pkg.isEmpty()) {
                     status.text = "Enter your Fortnoob package name first."
                     return@setOnClickListener
                 }
-                getPreferences(MODE_PRIVATE).edit().putString("target_package", pkg).apply()
+
+                getPreferences(MODE_PRIVATE).edit()
+                    .putString("target_package", pkg).apply()
+
                 val service = AutoFnhkAccessibilityService.instance
                 if (service == null) {
                     status.text = "Controller is not enabled. Tap Enable Android controller first."
                     return@setOnClickListener
                 }
+
                 if (running.getAndSet(true)) {
                     status.text = "AI plan is already running."
                     return@setOnClickListener
                 }
-                status.text = "AI plan running: " + pkg
+
+                status.text = "Aim plan running: " + pkg
                 service.executeTestPlan(pkg, prompt.text.toString()) {
                     runOnUiThread {
                         running.set(false)
-                        status.text = "AI plan finished. Check Diagnostics for the action log."
+                        status.text = "Aim plan finished. Check Diagnostics."
                     }
                 }
             }
             box.addView(begin)
+
+            val info = TextView(this).apply {
+                text = "Android mode uses touch gestures for aim/camera movement. Physical Chromebook mouse and keyboard injection needs a native ChromeOS/Linux input bridge."
+                textSize = 13f
+                setTextColor(Color.GRAY)
+                setPadding(0, 12, 0, 0)
+            }
+            box.addView(info)
+
             content.addView(box)
-            status.text = "Type an instruction, enable the controller, then press Begin."
+            status.text = "Enable the controller, open Fortnoob, then run the aim test."
         }
 
         fun showSettings() {
@@ -122,11 +136,13 @@ class MainActivity : android.app.Activity() {
             }
             addSwitch(box, "Aim Lock", true)
             addSwitch(box, "Auto Smoothing", true)
+            addSwitch(box, "Keyboard Actions", true)
+            addSwitch(box, "Mouse Actions", true)
             addSwitch(box, "Diagnostics / Event Logging", true)
             addSwitch(box, "Learning / Performance Feedback", true)
             addSwitch(box, "Human-like Variation", true)
             content.addView(box)
-            status.text = "Settings are saved for this session."
+            status.text = "Input features enabled for the current test configuration."
         }
 
         fun showDiagnostics() {
